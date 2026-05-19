@@ -51,12 +51,12 @@
 
       <div class="navbar-nav ms-auto">
         <a class="nav-link" href="/listings/new">Airbnb your home</a>
-        <% if (!locals.currUser) { %>
+        <% if (!currUser) { %>
           <a class="nav-link active" href="/signup"><b>Sign UP</b></a>
           <a class="nav-link" href="/login"><b>Log In</b></a>
           <% } %>
 
-            <% if (locals.currUser) { %>
+            <% if (currUser) { %>
               <a class="nav-link" href="/logout"><b>Log Out</b></a>
               <% } %>
 
