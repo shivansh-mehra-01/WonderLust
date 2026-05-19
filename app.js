@@ -22,6 +22,7 @@ const listingsRouter = require("./routes/listing.js");
 const userRouter = require("./routes/user.js"); 
 
 const dbUrl = process.env.ATLASDB_URL;
+const sessionSecret = process.env.SECRET || "mysupersecretcode";
 
 // Middlewares
 app.set("view engine", "ejs");
@@ -42,7 +43,7 @@ try {
             mongoUrl: mongoUrlForStore,
             touchAfter: 24 * 60 * 60,
             crypto: { 
-                secret: process.env.SECRET,
+                secret: sessionSecret,
              },
         });
     } else if (typeof MongoStore === 'function') {
@@ -51,7 +52,7 @@ try {
             url: mongoUrlForStore,
             touchAfter: 24 * 60 * 60,
             crypto: { 
-                secret: process.env.SECRET, 
+                secret: sessionSecret, 
             },
         });
     } else if (MongoStore && MongoStore.default && typeof MongoStore.default.create === 'function') {
@@ -59,7 +60,7 @@ try {
             mongoUrl: mongoUrlForStore,
             touchAfter: 24 * 60 * 60,
             crypto: { 
-                secret: process.env.SECRET, 
+                secret: sessionSecret, 
             },
         });
     } else {
@@ -79,7 +80,7 @@ if (store && typeof store.on === 'function') {
 
 const sessionOptions = {
     ...(store ? { store } : {}),
-    secret: process.env.SECRET,
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: true,
     cookie: {
