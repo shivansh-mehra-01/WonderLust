@@ -4,6 +4,7 @@ require('dotenv').config();
 
 const express = require("express");
 const app = express();
+app.set("trust proxy", 1);
 const mongoose = require("mongoose");
 const path = require("path");
 const methodOverride = require("method-override");
@@ -30,7 +31,7 @@ app.use(methodOverride("_method"));
 app.engine("ejs", ejsMate);
 app.use(express.static(path.join(__dirname, "/public")));
 
-const sessionSecret = process.env.SESSION_SECRET || 'mysecretcode';
+
 
 let store = null;
 const mongoUrlForStore = dbUrl || 'mongodb://127.0.0.1:27017/wanderlust';
@@ -42,7 +43,6 @@ try {
             touchAfter: 24 * 60 * 60,
             crypto: { 
                 secret: process.env.SECRET,
-
              },
         });
     } else if (typeof MongoStore === 'function') {
@@ -52,7 +52,6 @@ try {
             touchAfter: 24 * 60 * 60,
             crypto: { 
                 secret: process.env.SECRET, 
-
             },
         });
     } else if (MongoStore && MongoStore.default && typeof MongoStore.default.create === 'function') {
@@ -61,7 +60,6 @@ try {
             touchAfter: 24 * 60 * 60,
             crypto: { 
                 secret: process.env.SECRET, 
-
             },
         });
     } else {
@@ -88,13 +86,14 @@ const sessionOptions = {
         expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
         maxAge: 7 * 24 * 60 * 60 * 1000,
         httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
     },
 };
 
 // home route
-// app.get("/", (req, res) => {
-//     res.send("Hi, I am root");
-// });
+app.get("/", (req, res) => {
+    res.redirect("/listings");
+});
 
 
 app.use(session(sessionOptions));
@@ -114,16 +113,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// app.get("/demouser", async (req, res) => {
-//     let fakeUser = new User({
-//         email: "student@gmail.com",
-//         username: "delta-student"
-//     });
-
-//     let registeredUser = await User.register(fakeUser, "helloworld");
-//     res.send(registeredUser);
-// });
-
 // mongoose connection 
 main().then(() => {
     console.log("Connected to DB");
@@ -132,7 +121,7 @@ main().then(() => {
 });
 
 async function main() {
-    await mongoose.connect(dbUrl);
+    await mongoose.connect(dbUrl || "mongodb://127.0.0.1:27017/wanderlust");
 }
 
 app.use("/listings", listingsRouter);
@@ -141,7 +130,7 @@ app.use("/", userRouter);
 
 // catch-all 404 (use middleware-style catch-all — safest)
 app.use((req, res, next) => {
-    next(new ExpressError(404, "Bhai Page not found!"));
+    next(new ExpressError(404, "Page not found!"));
 });
 
 // error handler (robust defaults)
@@ -158,6 +147,7 @@ app.use((err, req, res, next) => {
     res.status(statusCode).render("error.ejs", { message });
 });
 
-app.listen(3000, () => {
-    console.log("app is listening on port 3000");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`app is listening on port ${PORT}`);
 });

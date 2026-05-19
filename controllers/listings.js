@@ -27,18 +27,11 @@ module.exports.showListing = async (req, res) => {
         req.flash("error", "Listing you requested for does not exist!");
         return res.redirect("/listings");
     }
-    console.log(listing);
     return res.render("listings/show.ejs", { listing });
 }
 
 module.exports.createListing = async (req, res) => {
-    console.log('createListing - req.file:', req.file ? {
-        originalname: req.file.originalname,
-        mimetype: req.file.mimetype,
-        size: req.file.size || (req.file.buffer && req.file.buffer.length),
-        path: req.file.path,
-        filename: req.file.filename
-    } : null);
+
     let url, filename;
     // Handle cases where multer storage provides a path/filename (Cloudinary multer storage)
     // or where multer uses memoryStorage and provides a buffer (we must upload it to Cloudinary)
@@ -58,17 +51,14 @@ module.exports.createListing = async (req, res) => {
                 });
             };
             const resultUpload = await uploadFromBuffer(req.file.buffer);
-            console.log('createListing uploadFromBuffer result:', resultUpload);
             url = resultUpload.secure_url || resultUpload.url;
             filename = resultUpload.public_id || resultUpload.asset_id || resultUpload.filename;
         }
     }
 
-    console.log(url, "..", filename);
     let result = listingSchema.validate(req.body);
-    console.log(result);
     if (result.error) {
-        throw new ExpressError(404, result.error);
+        throw new ExpressError(400, result.error);
     }
     const newListing = new Listing(req.body.listing);
     newListing.owner = req.user._id;
@@ -95,13 +85,9 @@ module.exports.updateListing = async (req, res) => {
     let { id } = req.params;
     const updated = await Listing.findByIdAndUpdate(id, { ...req.body.listing });
 
-    console.log('updateListing - req.file:', req.file ? {
-        originalname: req.file.originalname,
-        mimetype: req.file.mimetype,
-        size: req.file.size || (req.file.buffer && req.file.buffer.length),
-        path: req.file.path,
-        filename: req.file.filename
-    } : null);
+    if (!updated) {
+        throw new ExpressError(404, "Listing not found");
+    }
 
     if (req.file) {
         let url, filename;
@@ -120,7 +106,6 @@ module.exports.updateListing = async (req, res) => {
                 });
             };
             const resultUpload = await uploadFromBuffer(req.file.buffer);
-            console.log('updateListing uploadFromBuffer result:', resultUpload);
             url = resultUpload.secure_url || resultUpload.url;
             filename = resultUpload.public_id || resultUpload.asset_id || resultUpload.filename;
         }
@@ -128,9 +113,6 @@ module.exports.updateListing = async (req, res) => {
         await updated.save();
     }
 
-    if (!updated) {
-        throw new ExpressError(404, "Listing not found");
-    }
     req.flash("success", "Listing Updated!");
     res.redirect(`/listings/${id}`);
 }
@@ -141,7 +123,6 @@ module.exports.destroyListing = async (req, res) => {
     if (!deletedListing) {
         throw new ExpressError(404, "Listing not found");
     }
-    console.log(deletedListing);
     req.flash("success", "Listing deleted!");
     res.redirect("/listings");
 }

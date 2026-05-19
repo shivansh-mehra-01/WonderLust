@@ -1,17 +1,21 @@
 const mongoose = require("mongoose");
 let initData = require("./data.js");
 const Listing = require("../models/listing.js");
+const path = require("path");
 
-// mongoose connection 
+// Load env variables from parent folder
+require('dotenv').config({ path: path.join(__dirname, "../.env") });
+
+const dbUrl = process.env.ATLASDB_URL || "mongodb://127.0.0.1:27017/wanderlust";
 
 main().then(() => {
-    console.log("Connected to DB");
+    console.log("Connected to DB for initialization");
 }).catch((err) => {
     console.log(err);
 });
 
 async function main() {
-    await mongoose.connect("mongodb://127.0.0.1:27017/wanderlust");
+    await mongoose.connect(dbUrl);
 }
 
 const initDB = async () => {
